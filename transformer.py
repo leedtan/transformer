@@ -93,9 +93,21 @@ class Encoder:
     self.wd_emb = tf.Variable(
         tf.random_uniform([self.num_wds, ndims], minval=-1, maxval=1.))
     self.wd_vec = tf.nn.embedding_lookup(self.wd_emb, wd_ind)
-    self.position = tf.reshape(
-        tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32) / 10000,
+    self.pos = tf.reshape(
+        tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32),
         (1, -1, 1))
+    self.divider_exponent = tf.reshape(
+        tf.range(tf.cast(ndims // 2, tf.float32)),
+        (1, 1, -1)) * 2. / tf.cast(ndims, tf.float32)
+    self.divider = tf.pow(10000., self.divider_exponent)
+    self.input_to_sinusoids = self.pos / self.divider
+    self.pos_sin = tf.sin(self.input_to_sinusoids)
+    self.pos_cos = tf.cos(self.input_to_sinusoids)
+    # self.position = tf.reshape(
+    #     tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32) / 10000,
+    #     (1, -1, 1))
+    self.position = tf.concat((self.pos_sin, self.pos_cos), -1)
+    #bs, sentence legnth, vector embedding
     self.w_tilde = embedding = self.wd_vec + self.position
     self.encoding = []
     self.attentionLayers = []
@@ -144,9 +156,21 @@ class Decoder:
     self.wd_emb = tf.Variable(
         tf.random_uniform([self.num_wds, ndims], minval=-1, maxval=1.))
     self.wd_vec = tf.nn.embedding_lookup(self.wd_emb, wd_ind)
-    self.position = tf.reshape(
-        tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32) / 10000,
+    self.pos = tf.reshape(
+        tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32),
         (1, -1, 1))
+    self.divider_exponent = tf.reshape(
+        tf.range(tf.cast(ndims // 2, tf.float32)),
+        (1, 1, -1)) * 2. / tf.cast(ndims, tf.float32)
+    self.divider = tf.pow(10000., self.divider_exponent)
+    self.input_to_sinusoids = self.pos / self.divider
+    self.pos_sin = tf.sin(self.input_to_sinusoids)
+    self.pos_cos = tf.cos(self.input_to_sinusoids)
+    # self.position = tf.reshape(
+    #     tf.range(tf.cast(self.length, tf.float32), dtype=tf.float32) / 10000,
+    #     (1, -1, 1))
+    self.position = tf.concat((self.pos_sin, self.pos_cos), -1)
+    #bs, sentence legnth, vector embedding
     self.w_tilde = embedding = self.wd_vec + self.position
     self.decoding = []
     self.self_attentions = []
